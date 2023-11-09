@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html body > div {
+  margin: 5rem;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  html body > div {
+    margin: 2rem;
+  }
+}
