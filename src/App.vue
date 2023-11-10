@@ -5,17 +5,28 @@ import { http } from './api/axios.js'
 const todos = reactive([])
 const newTodoInput = ref('')
 const isHidingCompletedTodos = ref(false)
+const isMissingText = ref(false)
+const isLoading = ref(false)
 
 async function fetchTodos() {
+  isLoading.value = true
   const { data } = await http.get('/todos')
   todos.splice(0, todos.length, ...data)
+  isLoading.value = false
 }
 
 async function handleCreateNewTodo() {
+  if (newTodoInput.value.length < 1) {
+    alert('Please, insert some text')
+    isMissingText.value = true
+
+    return
+  }
   const { data } = await http.post('/todos', {
     name: newTodoInput.value,
   })
   newTodoInput.value = ''
+  isMissingText.value = false
   fetchTodos()
 }
 
@@ -73,7 +84,13 @@ onMounted(() => {
       </button>
     </div>
 
-    <div class="mt-10 flex flex-col gap-5">
+    <div v-if="isLoading" class="flex justify-center mt-40">
+      <span class="loading loading-ball loading-xs"></span>
+      <span class="loading loading-ball loading-sm"></span>
+      <span class="loading loading-ball loading-md"></span>
+      <span class="loading loading-ball loading-lg"></span>
+    </div>
+    <div v-if="isLoading === false" class="mt-10 flex flex-col gap-5">
       <div
         class="flex justify-between items-center"
         v-for="todo in filteredTodos"
@@ -106,6 +123,7 @@ onMounted(() => {
           type="text"
           placeholder="Nova nota"
           class="input input-bordered w-full"
+          :class="{ 'input-error': isMissingText === true }"
           v-model="newTodoInput"
         />
       </form>
