@@ -1,12 +1,25 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
 import { http } from './api/axios.js'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const todos = reactive([])
-const newTodoInput = ref('')
-const isHidingCompletedTodos = ref(false)
-const isMissingText = ref(false)
 const isLoading = ref(false)
+const newTodoInput = ref('')
+const isMissingText = ref(false)
+const isHidingCompletedTodos = ref(false)
+
+const confirmDeleteId = ref(null)
+
+function openConfirmModal(id) {
+  my_modal_1.showModal()
+  confirmDeleteId.value = id
+}
+
+function handleConfirmDelete() {
+  if (confirmDeleteId.value !== null) {
+    handleDeleteTaskByID(confirmDeleteId.value)
+  }
+}
 
 async function fetchTodos() {
   isLoading.value = true
@@ -17,7 +30,7 @@ async function fetchTodos() {
 
 async function handleCreateNewTodo() {
   if (newTodoInput.value.length < 1) {
-    alert('Please, insert some text')
+    alert('Por favor, insira algum texto')
     isMissingText.value = true
 
     return
@@ -35,11 +48,10 @@ async function handleDeleteTaskByID(id) {
   fetchTodos()
 }
 
-async function handleUpdateTaskState(id, done) {
+async function handleUpdateTaskByID(id, done) {
   const { data } = await http.put(`/todos/${id}`, {
     done,
   })
-  fetchTodos()
 }
 
 function handleChangeIsHidingCompletedTodos() {
@@ -102,20 +114,35 @@ onMounted(() => {
             :id="todo.id"
             v-model="todo.done"
             class="checkbox"
-            @click="handleUpdateTaskState(todo.id, !todo.done)"
+            @click="handleUpdateTaskByID(todo.id, !todo.done)"
           />
           <label :for="todo.id" :class="{ 'line-through': todo.done }">{{
             todo.name
           }}</label>
         </div>
         <img
-          @click="handleDeleteTaskByID(todo.id)"
+          @click="openConfirmModal(todo.id)"
           class="h-5 w-5 cursor-pointer"
           src="./assets/trash.svg"
           alt="trash icon"
         />
       </div>
     </div>
+
+    <dialog id="my_modal_1" class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Alerta!</h3>
+        <p class="py-4">Deseja mesmo excluir essa tarefa?</p>
+        <div class="modal-action">
+          <form method="dialog" class="flex gap-2">
+            <button class="btn btn-ghost">Cancelar</button>
+            <button @click="handleConfirmDelete" class="btn btn-error">
+              Sim
+            </button>
+          </form>
+        </div>
+      </div>
+    </dialog>
 
     <footer class="mt-16 fixed bottom-8 inset-x-8 md:inset-x-20 md:bottom-20">
       <form @submit.prevent="handleCreateNewTodo">
